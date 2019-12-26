@@ -5,15 +5,19 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"runtime"
 	"strconv"
 
-	"github.com/fatih/color"
 	"github.com/nasfiles/api"
+	"github.com/nasfiles/api/bolt"
 
-	"golang.org/x/net/webdav"
+	boltdb "github.com/boltdb/bolt"
+	"github.com/fatih/color"
 )
 
 func main() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	// parse flags
 	cfgPath := flag.String("config", "", "JSON config file")
 	development := flag.Bool("development", false, "Development mode")
@@ -23,7 +27,8 @@ func main() {
 	port := flag.String("port", "3000", "Server port")
 	secure := flag.Bool("secure", false, "Secure connection")
 
-	// Storage
+	// Database and Storage
+	DBpath := flag.String("db", "nasfiles.db", "Database path")
 	storage := flag.String("storage", ".", "Storage base folder")
 
 	flag.Parse()
@@ -45,33 +50,31 @@ func main() {
 	} else {
 		portInt, _ := strconv.Atoi(*port)
 
+		db, err := boltdb.Open(*DBpath, 0600, nil)
+		if err != nil {
+			color.HiRed("Couldn't open database.")
+			log.Fatalf("Couldn't open database: %v", err)
+		}
+
 		cfg = &api.Config{
 			Development: *development,
 			Host:        *host,
 			Port:        portInt,
 			Secure:      *secure,
+			Services: &api.Services{
+				User: &bolt.UserService{
+					DB: db,
+				},
+			},
 			StorageRoot: *storage,
 		}
 	}
 
+	// Print config values
 	cfg.Log()
 
-	// WebDAV configuration
-	srv := &webdav.Handler{
-		FileSystem: webdav.Dir(*storage),
-		LockSystem: webdav.NewMemLS(),
-		Logger: func(r *http.Request, err error) {
-			if err != nil {
-				log.Printf("WEBDAV [%s]: %s, ERROR: %s\n", r.Method, r.URL, err)
-			} else {
-				log.Printf("WEBDAV [%s]: %s \n", r.Method, r.URL)
-			}
-		},
-	}
-	http.Handle("/", srv)
-
-	color.HiCyan("\n\nStarting WebDAV server...")
 	// Start HTTP WebDav Server
+	color.HiCyan("\n\nStarting WebDAV server...")
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port), nil); err != nil {
 		color.HiRed("Couldn't start HTTP WebDAV server.")
 		log.Fatalf("Error starting HTTP WebDAV server: %v", err)

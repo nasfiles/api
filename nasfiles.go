@@ -8,6 +8,7 @@ import (
 	terminal "github.com/wayneashleyberry/terminal-dimensions"
 )
 
+//Config ...
 type Config struct {
 	Development bool
 
@@ -17,9 +18,11 @@ type Config struct {
 	Secure bool
 
 	StorageRoot string
+
+	Services *Services
 }
 
-//Log prints all the configuration values the API is running under
+//Log prints all the coniguration values the API is running under
 func (c *Config) Log() {
 	// get terminal size
 	var width int = 120
@@ -54,4 +57,9 @@ func (c *Config) Log() {
 
 	// Ending separator
 	LineSeparator("-", color.New(color.FgHiCyan), width)
+}
+
+//Services is a struct to tie all the services into a unified struct
+type Services struct {
+	User UserService
 }

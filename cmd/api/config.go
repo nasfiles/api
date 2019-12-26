@@ -13,6 +13,7 @@ type config struct {
 
 	Secure bool
 
+	DB string
 	StorageRoot string
 }
 
