@@ -2,10 +2,10 @@ package api
 
 import (
 	"fmt"
-	"log"
+
+	"github.com/nasfiles/api/terminal"
 
 	"github.com/fatih/color"
-	terminal "github.com/wayneashleyberry/terminal-dimensions"
 )
 
 //Config ...
@@ -24,24 +24,17 @@ type Config struct {
 
 //Log prints all the coniguration values the API is running under
 func (c *Config) Log() {
-	// get terminal size
-	var width int = 120
-
-	x, err := terminal.Width()
-	if err != nil {
-		log.Println("Couldn't get the terminal width")
-	}
-	width = int(x)
+	width := terminal.TerminalSize()
 
 	// Start printing configuration values
 	color.HiYellow("Configuration")
 
 	// Beginning separator
-	LineSeparator("-", color.New(color.FgHiCyan), width)
+	terminal.LineSeparator("-", color.New(color.FgHiCyan), width)
 
 	// Development mode
 	fmt.Printf("Development mode: ")
-	YesNoColored(c.Development)
+	terminal.YesNoColored(c.Development)
 
 	// Host
 	fmt.Printf("Host: ")
@@ -49,14 +42,14 @@ func (c *Config) Log() {
 
 	// Secure
 	fmt.Printf("Secure: ")
-	YesNoColored(c.Secure)
+	terminal.YesNoColored(c.Secure)
 
 	// Storage
 	fmt.Printf("Storage path: ")
 	color.HiBlue(c.StorageRoot)
 
 	// Ending separator
-	LineSeparator("-", color.New(color.FgHiCyan), width)
+	terminal.LineSeparator("-", color.New(color.FgHiCyan), width)
 }
 
 //Services is a struct to tie all the services into a unified struct

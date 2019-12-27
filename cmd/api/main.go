@@ -21,6 +21,7 @@ func main() {
 	// parse flags
 	cfgPath := flag.String("config", "", "JSON config file")
 	development := flag.Bool("development", false, "Development mode")
+	dumpDB := flag.Bool("dump", false, "Dump database")
 
 	// Server address
 	host := flag.String("host", "localhost", "Server host")
@@ -78,7 +79,10 @@ func main() {
 	// Print config values
 	cfg.Log()
 
-	bolt.Dump(db)
+	if *dumpDB {
+		bolt.Dump(db, true)
+		return
+	}
 
 	// Start HTTP WebDav Server
 	color.HiCyan("\n\nStarting WebDAV server...")
