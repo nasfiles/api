@@ -34,6 +34,8 @@ func main() {
 	flag.Parse()
 
 	var cfg *api.Config
+	var db *boltdb.DB
+	var err error
 	if len(*cfgPath) > 0 {
 		c, err := loadConfig(*cfgPath)
 		if err != nil {
@@ -50,11 +52,14 @@ func main() {
 	} else {
 		portInt, _ := strconv.Atoi(*port)
 
-		db, err := boltdb.Open(*DBpath, 0600, nil)
+		db, err = boltdb.Open(*DBpath, 0600, nil)
 		if err != nil {
 			color.HiRed("Couldn't open database.")
 			log.Fatalf("Couldn't open database: %v", err)
 		}
+
+		// Initialize buckets if the database file was just created
+		bolt.Setup(db)
 
 		cfg = &api.Config{
 			Development: *development,
@@ -72,6 +77,8 @@ func main() {
 
 	// Print config values
 	cfg.Log()
+
+	bolt.Dump(db)
 
 	// Start HTTP WebDav Server
 	color.HiCyan("\n\nStarting WebDAV server...")
