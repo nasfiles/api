@@ -64,7 +64,7 @@ func dumpConsoleLog(buckets []string, users []api.User) {
 	// End
 }
 
-//BucketsList
+//bucketsList retrieves the list of all buckets
 func bucketsList(db *bolt.DB) ([]string, error) {
 	var buckets []string
 

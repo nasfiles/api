@@ -2,6 +2,7 @@ package bolt
 
 import (
 	"encoding/json"
+	"errors"
 
 	"github.com/boltdb/bolt"
 	"github.com/nasfiles/api"
@@ -25,7 +26,7 @@ func (s *UserService) Add(u *api.User) error {
 		}
 
 		// put new data into the bucket
-		err := b.Put([]byte(u.UID), userJSON)
+		err := b.Put([]byte(u.Username), userJSON)
 		return err
 	})
 
@@ -34,6 +35,33 @@ func (s *UserService) Add(u *api.User) error {
 	}
 
 	return nil
+}
+
+//GetByUsername retrieves a user from the database given its uid
+func (s *UserService) GetByUsername(username string) (*api.User, error) {
+	var u *api.User
+
+	err := s.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("users"))
+
+		userBytes := b.Get([]byte(username))
+
+		if len(userBytes) == 0 {
+			return errors.New("Not found")
+		}
+
+		if e := json.Unmarshal(userBytes, &u); e != nil {
+			return e
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return u, nil
 }
 
 //Delete user

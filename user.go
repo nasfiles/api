@@ -14,5 +14,6 @@ type User struct {
 //UserService ...
 type UserService interface {
 	Add(u *User) error
+	GetByUsername(username string) (*User, error)
 	Delete(uid string) error
 }

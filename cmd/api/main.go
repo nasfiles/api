@@ -2,20 +2,20 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
-	"net/http"
 	"runtime"
 	"strconv"
 
 	"github.com/nasfiles/api"
 	"github.com/nasfiles/api/bolt"
+	h "github.com/nasfiles/api/http"
 
 	boltdb "github.com/boltdb/bolt"
 	"github.com/fatih/color"
 )
 
 func main() {
+	// run the api server with the maximum number of cpu cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// parse flags
@@ -79,15 +79,11 @@ func main() {
 	// Print config values
 	cfg.Log()
 
+	// if the dump flag is used, dump the database info and don't spawn the http server
 	if *dumpDB {
 		bolt.Dump(db, true)
 		return
 	}
 
-	// Start HTTP WebDav Server
-	color.HiCyan("\n\nStarting WebDAV server...")
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", cfg.Host, cfg.Port), nil); err != nil {
-		color.HiRed("Couldn't start HTTP WebDAV server.")
-		log.Fatalf("Error starting HTTP WebDAV server: %v", err)
-	}
+	h.Serve(cfg)
 }
