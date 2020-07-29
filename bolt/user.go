@@ -64,6 +64,34 @@ func (s *UserService) GetByUsername(username string) (*nasfilesapi.User, error) 
 	return u, nil
 }
 
+// GetsAll retrieves all users from the database
+func (s *UserService) GetsAll() (*[]nasfilesapi.User, error) {
+	users := &[]nasfilesapi.User{}
+
+	err := s.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("users"))
+
+		err := b.ForEach(func(k, v []byte) error {
+			user := &nasfilesapi.User{}
+
+			// decode user json information
+			err := json.Unmarshal(v, &user)
+			if err != nil {
+				return err
+			}
+
+			// append to array of users
+			(*users) = append(*users, *user)
+
+			return nil
+		})
+
+		return err
+	})
+
+	return users, err
+}
+
 //Delete user
 func (s *UserService) Delete(uid string) error {
 	err := s.DB.Update(func(tx *bolt.Tx) error {
