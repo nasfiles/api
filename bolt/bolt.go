@@ -1,6 +1,7 @@
 package bolt
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/boltdb/bolt"
@@ -26,8 +27,14 @@ func Dump(db *bolt.DB, consoleLog bool) error {
 		return err
 	}
 
+	// User list
+	users, err := usersList(db)
+	if err != nil {
+		return err
+	}
+
 	if consoleLog {
-		dumpConsoleLog(buckets, []nasfilesapi.User{})
+		dumpConsoleLog(buckets, users)
 	}
 
 	return nil
@@ -78,6 +85,34 @@ func bucketsList(db *bolt.DB) ([]string, error) {
 	}
 
 	return buckets, nil
+}
+
+// usersList retrieves the list of all users registered
+func usersList(db *bolt.DB) ([]nasfilesapi.User, error) {
+	users := []nasfilesapi.User{}
+
+	err := db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("users"))
+
+		err := b.ForEach(func(k, v []byte) error {
+			user := nasfilesapi.User{}
+
+			// decode user json information
+			err := json.Unmarshal(v, &user)
+			if err != nil {
+				return err
+			}
+
+			// append to array of users
+			users = append(users, user)
+
+			return nil
+		})
+
+		return err
+	})
+
+	return users, err
 }
 
 //createBucketIfNotExists creates a bucket if it doesn't exist

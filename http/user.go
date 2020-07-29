@@ -1,10 +1,12 @@
 package http
 
 import (
-	"encoding/base64"
+	"bytes"
+	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/fatih/color"
 	"github.com/gorilla/mux"
 
 	"github.com/nasfiles/nasfilesapi"
@@ -13,17 +15,29 @@ import (
 
 //UserAdd inserts a user into the database
 func UserAdd(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (int, error) {
-	u := &nasfilesapi.User{
-		UID:      base64.URLEncoding.EncodeToString(utils.GenerateSHA256()),
-		Username: "fabiofcferreira",
-		Email:    "ffcfpten@gmail.com",
-		Name:     "Fábio",
-		Created:  time.Now(),
+	u := &nasfilesapi.User{}
+
+	reqBuffer := new(bytes.Buffer)
+	reqBuffer.ReadFrom(r.Body)
+
+	// parse json
+	err := json.Unmarshal(reqBuffer.Bytes(), u)
+	if err != nil {
+		return http.StatusInternalServerError, nil
 	}
 
-	c.Services.User.Add(u)
+	// Hash password and assign creation time
+	u.SetPassword(u.Password)
+	u.Created = time.Now()
 
-	return http.StatusOK, nil
+	err = c.Services.User.Add(u)
+	if err != nil {
+		return http.StatusInternalServerError, nil
+	}
+
+	color.HiGreen("Created a new user with username %s...", u.Username)
+
+	return jsonPrint(w, u)
 }
 
 //UserGet retrieves a user from the database and returns it

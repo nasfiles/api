@@ -11,11 +11,9 @@ import (
 //Config ...
 type Config struct {
 	Development bool
-
-	Host string
-	Port int
-
-	Secure bool
+	Host        string
+	Port        int
+	Secure      bool
 
 	StorageRoot string
 

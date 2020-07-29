@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 	"runtime"
 	"strconv"
 
@@ -14,65 +15,108 @@ import (
 	h "github.com/nasfiles/nasfilesapi/http"
 )
 
+var cfgPath string
+var development bool
+var dumpDB bool
+
+var host string
+var port string
+var secure bool
+
+var dbPath string
+var storageRoot string
+
+var cfg *nasfilesapi.Config
+var db *boltdb.DB
+
+func parseFlags() {
+	flag.StringVar(&cfgPath, "config", "config.json", "JSON config file")
+	flag.BoolVar(&development, "development", false, "Development mode")
+	flag.BoolVar(&dumpDB, "dump", false, "Dump database")
+
+	// Server address
+	flag.StringVar(&host, "host", "localhost", "Server host")
+	flag.StringVar(&port, "port", "3000", "Server port")
+	flag.BoolVar(&secure, "secure", false, "Secure connection")
+
+	// Database and Storage
+	flag.StringVar(&dbPath, "db", "nasfiles.db", "Database path")
+	flag.StringVar(&storageRoot, "storage", "storage", "Storage base folder")
+
+	flag.Parse()
+}
+
 func main() {
 	// Run the api server with the maximum number of cpu cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Parse flags
-	cfgPath := flag.String("config", "", "JSON config file")
-	development := flag.Bool("development", false, "Development mode")
-	dumpDB := flag.Bool("dump", false, "Dump database")
+	parseFlags()
 
-	// Server address
-	host := flag.String("host", "localhost", "Server host")
-	port := flag.String("port", "3000", "Server port")
-	secure := flag.Bool("secure", false, "Secure connection")
-
-	// Database and Storage
-	DBpath := flag.String("db", "nasfiles.db", "Database path")
-	storage := flag.String("storage", ".", "Storage base folder")
-
-	flag.Parse()
-
-	var cfg *nasfilesapi.Config
-	var db *boltdb.DB
 	var err error
-	if len(*cfgPath) > 0 {
-		c, err := loadConfig(*cfgPath)
+	if len(cfgPath) > 0 {
+		c, err := loadConfig(cfgPath)
 		if err != nil {
 			log.Panic(err)
 		}
+
+		// Open database file
+		db, err = boltdb.Open(dbPath, 0600, nil)
+		if err != nil {
+			color.HiRed("Couldn't open database file.")
+			log.Fatalf("Couldn't open database file: %v", err)
+		}
+
+		// Initialize buckets if the database file was just created
+		bolt.Setup(db)
 
 		cfg = &nasfilesapi.Config{
 			Development: c.Development,
 			Host:        c.Host,
 			Port:        c.Port,
 			Secure:      c.Secure,
+
 			StorageRoot: c.StorageRoot,
+			Services: &nasfilesapi.Services{
+				User: &bolt.UserService{
+					DB: db,
+				},
+			},
 		}
 	} else {
-		portInt, _ := strconv.Atoi(*port)
+		portInt, _ := strconv.Atoi(port)
 
-		db, err = boltdb.Open(*DBpath, 0600, nil)
+		// Open database file
+		db, err = boltdb.Open(dbPath, 0600, nil)
 		if err != nil {
-			color.HiRed("Couldn't open database.")
-			log.Fatalf("Couldn't open database: %v", err)
+			color.HiRed("Couldn't open database file.")
+			log.Fatalf("Couldn't open database file: %v", err)
 		}
 
 		// Initialize buckets if the database file was just created
 		bolt.Setup(db)
 
-		cfg = &api.Config{
-			Development: *development,
-			Host:        *host,
+		cfg = &nasfilesapi.Config{
+			Development: development,
+			Host:        host,
 			Port:        portInt,
-			Secure:      *secure,
-			Services: &api.Services{
+			Secure:      secure,
+
+			StorageRoot: storageRoot,
+			Services: &nasfilesapi.Services{
 				User: &bolt.UserService{
 					DB: db,
 				},
 			},
-			StorageRoot: *storage,
+		}
+	}
+
+	// Create a storage folder if it doesn't exist
+	if _, err := os.Stat(cfg.StorageRoot); os.IsNotExist(err) {
+		err := os.Mkdir(cfg.StorageRoot, 0755)
+		if err != nil {
+			color.HiRed("Couldn't create storage folder at %s.\n-")
+			log.Fatalf("Couldn't storage folder: %v", err)
 		}
 	}
 
@@ -80,8 +124,13 @@ func main() {
 	cfg.Log()
 
 	// If the dump flag is used, dump the database info and don't spawn the http server
-	if *dumpDB {
-		bolt.Dump(db, true)
+	if dumpDB {
+		err := bolt.Dump(db, true)
+		if err != nil {
+			color.HiRed("Couldn't dump database information.\n")
+			log.Fatalf("Couldn't dump database information: %v", err)
+		}
+
 		return
 	}
 

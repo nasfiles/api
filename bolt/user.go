@@ -14,21 +14,20 @@ type UserService struct {
 	DB *bolt.DB
 }
 
-//Add user
+// Add creates a new user in the database
 func (s *UserService) Add(u *nasfilesapi.User) error {
+	// Encode User struct to json
+	userJSON, e := json.Marshal(u)
+	if e != nil {
+		return e
+	}
+
 	err := s.DB.Update(func(tx *bolt.Tx) error {
 		// select user bucket
 		b := tx.Bucket([]byte("users"))
 
-		// Encode User struct to json
-		userJSON, e := json.Marshal(*u)
-		if e != nil {
-			return e
-		}
-
-		// put new data into the bucket
-		err := b.Put([]byte(u.Username), userJSON)
-		return err
+		// put new user into the bucket
+		return b.Put([]byte(u.Username), userJSON)
 	})
 
 	if err != nil {
@@ -38,7 +37,7 @@ func (s *UserService) Add(u *nasfilesapi.User) error {
 	return nil
 }
 
-//GetByUsername retrieves a user from the database given its uid
+// GetByUsername retrieves a user from the database given its uid
 func (s *UserService) GetByUsername(username string) (*nasfilesapi.User, error) {
 	var u *nasfilesapi.User
 

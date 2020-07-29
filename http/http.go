@@ -20,7 +20,7 @@ type APIHandler func(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Conf
 
 // Wrap function defines and returns a HTTP handler function with access
 // to the config and all services
-func Wrap(h APIHandler, c *api.Config) http.HandlerFunc {
+func Wrap(h APIHandler, c *nasfilesapi.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			code int
@@ -49,6 +49,7 @@ func Wrap(h APIHandler, c *api.Config) http.HandlerFunc {
 				color.Red(e.Error())
 				return
 			}
+
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(data)
 
