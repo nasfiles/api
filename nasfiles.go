@@ -1,11 +1,11 @@
-package api
+package nasfilesapi
 
 import (
 	"fmt"
 
-	"github.com/nasfiles/api/terminal"
-
 	"github.com/fatih/color"
+
+	"github.com/nasfiles/nasfilesapi/terminal"
 )
 
 //Config ...

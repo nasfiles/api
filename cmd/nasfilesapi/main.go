@@ -6,19 +6,19 @@ import (
 	"runtime"
 	"strconv"
 
-	"github.com/nasfiles/api"
-	"github.com/nasfiles/api/bolt"
-	h "github.com/nasfiles/api/http"
-
 	boltdb "github.com/boltdb/bolt"
 	"github.com/fatih/color"
+
+	"github.com/nasfiles/nasfilesapi"
+	"github.com/nasfiles/nasfilesapi/bolt"
+	h "github.com/nasfiles/nasfilesapi/http"
 )
 
 func main() {
-	// run the api server with the maximum number of cpu cores
+	// Run the api server with the maximum number of cpu cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// parse flags
+	// Parse flags
 	cfgPath := flag.String("config", "", "JSON config file")
 	development := flag.Bool("development", false, "Development mode")
 	dumpDB := flag.Bool("dump", false, "Dump database")
@@ -34,7 +34,7 @@ func main() {
 
 	flag.Parse()
 
-	var cfg *api.Config
+	var cfg *nasfilesapi.Config
 	var db *boltdb.DB
 	var err error
 	if len(*cfgPath) > 0 {
@@ -43,7 +43,7 @@ func main() {
 			log.Panic(err)
 		}
 
-		cfg = &api.Config{
+		cfg = &nasfilesapi.Config{
 			Development: c.Development,
 			Host:        c.Host,
 			Port:        c.Port,
@@ -79,7 +79,7 @@ func main() {
 	// Print config values
 	cfg.Log()
 
-	// if the dump flag is used, dump the database info and don't spawn the http server
+	// If the dump flag is used, dump the database info and don't spawn the http server
 	if *dumpDB {
 		bolt.Dump(db, true)
 		return

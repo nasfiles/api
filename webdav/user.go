@@ -1,13 +1,13 @@
 package webdav
 
 import (
-	"github.com/nasfiles/api"
-
 	"golang.org/x/net/webdav"
+
+	"github.com/nasfiles/nasfilesapi"
 )
 
 //UserHandler spawns a WebDAV HTTP handler for his folder
-func UserHandler(u *api.User) webdav.Handler {
+func UserHandler(u *nasfilesapi.User) webdav.Handler {
 	var h webdav.Handler
 	h = webdav.Handler{}
 

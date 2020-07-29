@@ -6,13 +6,14 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/nasfiles/api"
-	"github.com/nasfiles/api/utils"
+
+	"github.com/nasfiles/nasfilesapi"
+	"github.com/nasfiles/nasfilesapi/utils"
 )
 
 //UserAdd inserts a user into the database
-func UserAdd(w http.ResponseWriter, r *http.Request, c *api.Config) (int, error) {
-	u := &api.User{
+func UserAdd(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (int, error) {
+	u := &nasfilesapi.User{
 		UID:      base64.URLEncoding.EncodeToString(utils.GenerateSHA256()),
 		Username: "fabiofcferreira",
 		Email:    "ffcfpten@gmail.com",
@@ -26,10 +27,10 @@ func UserAdd(w http.ResponseWriter, r *http.Request, c *api.Config) (int, error)
 }
 
 //UserGet retrieves a user from the database and returns it
-func UserGet(w http.ResponseWriter, r *http.Request, c *api.Config) (int, error) {
+func UserGet(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (int, error) {
 	uid := mux.Vars(r)["uid"]
 
-	var u *api.User
+	var u *nasfilesapi.User
 
 	u, err := c.Services.User.GetByUsername(uid)
 	if err != nil {
@@ -40,7 +41,7 @@ func UserGet(w http.ResponseWriter, r *http.Request, c *api.Config) (int, error)
 }
 
 //UserDelete inserts a user into the database
-func UserDelete(w http.ResponseWriter, r *http.Request, c *api.Config) (int, error) {
+func UserDelete(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (int, error) {
 	uid := mux.Vars(r)["uid"]
 
 	err := c.Services.User.Delete(uid)

@@ -6,13 +6,13 @@ import (
 	"strconv"
 
 	"github.com/fatih/color"
-	"github.com/nasfiles/api"
-
 	"github.com/gorilla/mux"
+
+	"github.com/nasfiles/nasfilesapi"
 )
 
-//Serve sets all routes with mux and spawns the HTTP server
-func Serve(cfg *api.Config) {
+// Serve sets all routes with mux and spawns the HTTP server
+func Serve(cfg *nasfilesapi.Config) {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/users", Wrap(UserAdd, cfg)).Methods("POST")

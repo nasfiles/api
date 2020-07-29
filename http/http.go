@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/fatih/color"
-	"github.com/nasfiles/api"
+
+	"github.com/nasfiles/nasfilesapi"
 )
 
 type response struct {
@@ -13,12 +14,12 @@ type response struct {
 	Message string `json:"message,omitempty"`
 }
 
-//APIHandler is the type of function that should be written and used with Wrap
-//to simulate standard HandlerFunc's functions,but with access to the config
-type APIHandler func(w http.ResponseWriter, r *http.Request, c *api.Config) (int, error)
+// APIHandler is the type of function that should be written and used with Wrap
+// to simulate standard HandlerFunc's functions,but with access to the config
+type APIHandler func(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (int, error)
 
-//Wrap function defines and returns a HTTP handler function with access
-//to the config and all services
+// Wrap function defines and returns a HTTP handler function with access
+// to the config and all services
 func Wrap(h APIHandler, c *api.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (

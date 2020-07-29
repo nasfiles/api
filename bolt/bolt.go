@@ -3,11 +3,11 @@ package bolt
 import (
 	"fmt"
 
-	"github.com/nasfiles/api"
-	"github.com/nasfiles/api/terminal"
-
 	"github.com/boltdb/bolt"
 	"github.com/fatih/color"
+
+	"github.com/nasfiles/nasfilesapi"
+	"github.com/nasfiles/nasfilesapi/terminal"
 )
 
 //Setup populates the Bolt database with buckets and all the required stuff
@@ -27,13 +27,13 @@ func Dump(db *bolt.DB, consoleLog bool) error {
 	}
 
 	if consoleLog {
-		dumpConsoleLog(buckets, []api.User{})
+		dumpConsoleLog(buckets, []nasfilesapi.User{})
 	}
 
 	return nil
 }
 
-func dumpConsoleLog(buckets []string, users []api.User) {
+func dumpConsoleLog(buckets []string, users []nasfilesapi.User) {
 	// get terminal size
 	width := terminal.TerminalSize()
 

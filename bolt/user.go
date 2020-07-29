@@ -5,7 +5,8 @@ import (
 	"errors"
 
 	"github.com/boltdb/bolt"
-	"github.com/nasfiles/api"
+
+	"github.com/nasfiles/nasfilesapi"
 )
 
 //UserService implements all the methods to manage users
@@ -14,7 +15,7 @@ type UserService struct {
 }
 
 //Add user
-func (s *UserService) Add(u *api.User) error {
+func (s *UserService) Add(u *nasfilesapi.User) error {
 	err := s.DB.Update(func(tx *bolt.Tx) error {
 		// select user bucket
 		b := tx.Bucket([]byte("users"))
@@ -38,8 +39,8 @@ func (s *UserService) Add(u *api.User) error {
 }
 
 //GetByUsername retrieves a user from the database given its uid
-func (s *UserService) GetByUsername(username string) (*api.User, error) {
-	var u *api.User
+func (s *UserService) GetByUsername(username string) (*nasfilesapi.User, error) {
+	var u *nasfilesapi.User
 
 	err := s.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
