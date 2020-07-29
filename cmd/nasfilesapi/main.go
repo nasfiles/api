@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"strconv"
 
 	boltdb "github.com/boltdb/bolt"
 	"github.com/fatih/color"
@@ -16,32 +15,16 @@ import (
 )
 
 var cfgPath string
-var development bool
-var dumpDB bool
-
-var host string
-var port string
-var secure bool
-
 var dbPath string
-var storageRoot string
+var dumpDB bool
 
 var cfg *nasfilesapi.Config
 var db *boltdb.DB
 
 func parseFlags() {
 	flag.StringVar(&cfgPath, "config", "config.json", "JSON config file")
-	flag.BoolVar(&development, "development", false, "Development mode")
+	flag.StringVar(&dbPath, "db", "nasfilesapi.db", "Database file")
 	flag.BoolVar(&dumpDB, "dump", false, "Dump database")
-
-	// Server address
-	flag.StringVar(&host, "host", "localhost", "Server host")
-	flag.StringVar(&port, "port", "3000", "Server port")
-	flag.BoolVar(&secure, "secure", false, "Secure connection")
-
-	// Database and Storage
-	flag.StringVar(&dbPath, "db", "nasfiles.db", "Database path")
-	flag.StringVar(&storageRoot, "storage", "storage", "Storage base folder")
 
 	flag.Parse()
 }
@@ -54,61 +37,38 @@ func main() {
 	parseFlags()
 
 	var err error
-	if len(cfgPath) > 0 {
-		c, err := loadConfig(cfgPath)
-		if err != nil {
-			log.Panic(err)
-		}
+	c, err := loadConfig(cfgPath)
+	if err != nil {
+		log.Panic(err)
+	}
 
-		// Open database file
-		db, err = boltdb.Open(dbPath, 0600, nil)
-		if err != nil {
-			color.HiRed("Couldn't open database file.")
-			log.Fatalf("Couldn't open database file: %v", err)
-		}
+	// Open database file
+	db, err = boltdb.Open(dbPath, 0600, nil)
+	if err != nil {
+		color.HiRed("Couldn't open database file.")
+		log.Fatalf("Couldn't open database file: %v", err)
+	}
 
-		// Initialize buckets if the database file was just created
-		bolt.Setup(db)
+	// Initialize buckets if the database file was just created
+	bolt.Setup(db)
 
-		cfg = &nasfilesapi.Config{
-			Development: c.Development,
-			Host:        c.Host,
-			Port:        c.Port,
-			Secure:      c.Secure,
+	cfg = &nasfilesapi.Config{
+		Development: c.Development,
+		Host:        c.Host,
+		Port:        c.Port,
+		Secure:      c.Secure,
 
-			StorageRoot: c.StorageRoot,
-			Services: &nasfilesapi.Services{
-				User: &bolt.UserService{
-					DB: db,
-				},
+		PrivateKey: c.PrivateKey,
+
+		StorageRoot: c.StorageRoot,
+		Services: &nasfilesapi.Services{
+			Auth: &bolt.AuthService{
+				DB: db,
 			},
-		}
-	} else {
-		portInt, _ := strconv.Atoi(port)
-
-		// Open database file
-		db, err = boltdb.Open(dbPath, 0600, nil)
-		if err != nil {
-			color.HiRed("Couldn't open database file.")
-			log.Fatalf("Couldn't open database file: %v", err)
-		}
-
-		// Initialize buckets if the database file was just created
-		bolt.Setup(db)
-
-		cfg = &nasfilesapi.Config{
-			Development: development,
-			Host:        host,
-			Port:        portInt,
-			Secure:      secure,
-
-			StorageRoot: storageRoot,
-			Services: &nasfilesapi.Services{
-				User: &bolt.UserService{
-					DB: db,
-				},
+			User: &bolt.UserService{
+				DB: db,
 			},
-		}
+		},
 	}
 
 	// Create a storage folder if it doesn't exist

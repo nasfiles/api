@@ -15,9 +15,10 @@ type Config struct {
 	Port        int
 	Secure      bool
 
-	StorageRoot string
+	PrivateKey string
 
-	Services *Services
+	StorageRoot string
+	Services    *Services
 }
 
 //Log prints all the coniguration values the API is running under
@@ -53,4 +54,5 @@ func (c *Config) Log() {
 //Services is a struct to tie all the services into a unified struct
 type Services struct {
 	User UserService
+	Auth AuthService
 }

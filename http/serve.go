@@ -15,9 +15,12 @@ import (
 func Serve(cfg *nasfilesapi.Config) {
 	r := mux.NewRouter()
 
-	r.HandleFunc("/users", Wrap(UserAdd, cfg)).Methods("POST")
-	r.HandleFunc("/users/{uid}", Wrap(UserGet, cfg)).Methods("GET")
-	r.HandleFunc("/users/{uid}", Wrap(UserDelete, cfg)).Methods("DELETE")
+	auth := r.PathPrefix("/auth").Subrouter()
+	auth.HandleFunc("/login", Wrap(AuthLogin, cfg)).Methods("POST", "OPTIONS")
+
+	r.HandleFunc("/users", Wrap(UserAdd, cfg)).Methods("POST", "OPTIONS")
+	r.HandleFunc("/users/{uid}", Wrap(UserGet, cfg)).Methods("GET", "OPTIONS")
+	r.HandleFunc("/users/{uid}", Wrap(UserDelete, cfg)).Methods("DELETE", "OPTIONS")
 
 	// Start HTTP WebDav Server
 	color.HiCyan("\n\nStarting WebDAV server...")

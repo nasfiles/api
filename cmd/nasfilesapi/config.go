@@ -7,13 +7,13 @@ import (
 
 type config struct {
 	Development bool
+	Host        string
+	Port        int
+	Secure      bool
 
-	Host string
-	Port int
+	PrivateKey string
 
-	Secure bool
-
-	DB string
+	DB          string
 	StorageRoot string
 }
 
