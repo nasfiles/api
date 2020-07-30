@@ -11,6 +11,7 @@ type config struct {
 	Port        int
 	Secure      bool
 
+	Auth       bool
 	PrivateKey string
 
 	DB          string

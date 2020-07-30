@@ -15,15 +15,24 @@ import (
 func Serve(cfg *nasfilesapi.Config) {
 	r := mux.NewRouter()
 
-	auth := r.PathPrefix("/auth").Subrouter()
-	auth.HandleFunc("/login", Wrap(AuthLogin, cfg)).Methods("POST", "OPTIONS")
+	// API subrouter
+	api := r.PathPrefix("/api").Subrouter()
 
-	r.HandleFunc("/users", Wrap(UserAdd, cfg)).Methods("POST", "OPTIONS")
-	r.HandleFunc("/users/{uid}", Wrap(UserGet, cfg)).Methods("GET", "OPTIONS")
-	r.HandleFunc("/users/{uid}", Wrap(UserDelete, cfg)).Methods("DELETE", "OPTIONS")
+	// Auth
+	auth := api.PathPrefix("/auth").Subrouter()
+	auth.HandleFunc("/login", APIWrapper(AuthLogin, cfg)).Methods("POST", "OPTIONS")
+
+	// Users
+	users := api.PathPrefix("/users").Subrouter()
+	users.HandleFunc("/", APIWrapper(UserAdd, cfg)).Methods("POST", "OPTIONS")
+	users.HandleFunc("/users/{uid}", APIWrapper(UserGet, cfg)).Methods("GET", "OPTIONS")
+	users.HandleFunc("/users/{uid}", APIWrapper(UserDelete, cfg)).Methods("DELETE", "OPTIONS")
+
+	// WebDAV
+	r.PathPrefix("/").Handler(mustLogin(cfg))
 
 	// Start HTTP WebDav Server
-	color.HiCyan("\n\nStarting WebDAV server...")
+	color.HiCyan("Starting WebDAV server...")
 	if err := http.ListenAndServe(":"+strconv.Itoa(cfg.Port), r); err != nil {
 		log.Fatalf("Error starting HTTP WebDAV server: %v", err)
 	}

@@ -3,11 +3,14 @@ package main
 import (
 	"flag"
 	"log"
+	"net/http"
 	"os"
+	"path"
 	"runtime"
 
 	boltdb "github.com/boltdb/bolt"
 	"github.com/fatih/color"
+	"golang.org/x/net/webdav"
 
 	"github.com/nasfiles/nasfilesapi"
 	"github.com/nasfiles/nasfilesapi/bolt"
@@ -27,6 +30,33 @@ func parseFlags() {
 	flag.BoolVar(&dumpDB, "dump", false, "Dump database")
 
 	flag.Parse()
+}
+
+func loadUsers(c *nasfilesapi.Config) error {
+	// Fetch all users
+	users, err := c.Services.User.GetsAll()
+	if err != nil {
+		return err
+	}
+
+	// Create WebDAV handler and save it in the memory
+	for _, user := range *users {
+		user.Handler = &webdav.Handler{
+			FileSystem: webdav.Dir(path.Join(c.StorageRoot, user.Username)),
+			LockSystem: webdav.NewMemLS(),
+			Logger: func(r *http.Request, err error) {
+				if err != nil {
+					log.Printf("WEBDAV [%s]: %s, ERROR: %s\n", r.Method, r.URL, err)
+				} else {
+					log.Printf("WEBDAV [%s]: %s \n", r.Method, r.URL)
+				}
+			},
+		}
+
+		c.Users[user.Username] = user
+	}
+
+	return nil
 }
 
 func main() {
@@ -58,9 +88,23 @@ func main() {
 		Port:        c.Port,
 		Secure:      c.Secure,
 
+		Auth:       c.Auth,
 		PrivateKey: c.PrivateKey,
 
 		StorageRoot: c.StorageRoot,
+		Users:       map[string]nasfilesapi.User{},
+		DefaultHandler: &webdav.Handler{
+			FileSystem: webdav.Dir(c.StorageRoot),
+			LockSystem: webdav.NewMemLS(),
+			Logger: func(r *http.Request, err error) {
+				if err != nil {
+					log.Printf("WEBDAV [%s]: %s, ERROR: %s\n", r.Method, r.URL, err)
+				} else {
+					log.Printf("WEBDAV [%s]: %s \n", r.Method, r.URL)
+				}
+			},
+		},
+
 		Services: &nasfilesapi.Services{
 			Auth: &bolt.AuthService{
 				DB: db,
@@ -94,5 +138,9 @@ func main() {
 		return
 	}
 
+	// Load users into the memory
+	loadUsers(cfg)
+
+	// Start API
 	h.Serve(cfg)
 }

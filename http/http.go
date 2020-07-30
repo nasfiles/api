@@ -18,9 +18,9 @@ type response struct {
 // to simulate standard HandlerFunc's functions,but with access to the config
 type APIHandler func(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (int, error)
 
-// Wrap function defines and returns a HTTP handler function with access
+// APIWrapper function defines and returns a HTTP handler function with access
 // to the config and all services
-func Wrap(h APIHandler, c *nasfilesapi.Config) http.HandlerFunc {
+func APIWrapper(h APIHandler, c *nasfilesapi.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var (
 			code int
@@ -58,4 +58,65 @@ func Wrap(h APIHandler, c *nasfilesapi.Config) http.HandlerFunc {
 
 		code, err = h(w, r, c)
 	}
+}
+
+func mustLogin(c *nasfilesapi.Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if c.Auth {
+			// Gets the correct user for this request.
+			username, password, ok := r.BasicAuth()
+			if !ok {
+				w.Header().Set("WWW-Authenticate", `Basic realm="Restricted"`)
+				http.Error(w, "401 Unauthorized", 401)
+
+				return
+			}
+
+			credentials := &nasfilesapi.AuthGuess{
+				Username: username,
+				Password: password,
+			}
+
+			// Authenticate user
+			err := c.Services.Auth.Login(credentials)
+			if err != nil {
+				color.HiRed("Passwords don't match")
+				http.Error(w, "403 Unauthorized", 403)
+
+				return
+			}
+
+			user, ok := c.Users[username]
+			if !ok {
+				color.HiRed("No handler found")
+				http.Error(w, "Not authorized", 401)
+
+				return
+			}
+
+			// Excerpt from RFC4918, section 9.4:
+			//
+			// 		GET, when applied to a collection, may return the contents of an
+			//		"index.html" resource, a human-readable view of the contents of
+			//		the collection, or something else altogether.
+			//
+			// Get, when applied to collection, will return the same as PROPFIND method.
+			// if r.Method == "GET" && strings.HasPrefix(r.URL.Path, "/") {
+			// 	info, err := user.Handler.FileSystem.Stat(context.TODO(), strings.TrimPrefix(r.URL.Path, "/"))
+			// 	if err == nil && info.IsDir() {
+			// 		r.Method = "PROPFIND"
+
+			// 		if r.Header.Get("Depth") == "" {
+			// 			r.Header.Add("Depth", "1")
+			// 		}
+			// 	}
+			// }
+
+			c.Users[user.Username].Handler.ServeHTTP(w, r)
+			return
+		}
+
+		// Our middleware logic goes here...
+		c.DefaultHandler.ServeHTTP(w, r)
+	})
 }

@@ -1,14 +1,15 @@
 package terminal
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/fatih/color"
 	terminal "github.com/wayneashleyberry/terminal-dimensions"
 )
 
-//TerminalSize returns the terminal characters per line limit
-func TerminalSize() int {
+// Size returns the terminal characters per line limit
+func Size() int {
 	// get terminal size
 	var width int = 120
 
@@ -21,14 +22,15 @@ func TerminalSize() int {
 	return width
 }
 
-//LineSeparator prints a whole line of a given character
+// LineSeparator prints a whole line of a given character
 func LineSeparator(ch string, color *color.Color, width int) {
 	for i := 1; i <= width; i++ {
 		color.Printf(ch)
 	}
+	fmt.Println()
 }
 
-//YesNoColored prints Yes in green and No in red
+// YesNoColored prints Yes in green and No in red
 func YesNoColored(test bool) {
 	if test {
 		color.HiGreen("Yes")

@@ -4,26 +4,43 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
+	"golang.org/x/net/webdav"
 
 	"github.com/nasfiles/nasfilesapi/terminal"
 )
 
-//Config ...
+// Services is a struct to tie all the services into a unified struct
+type Services struct {
+	User UserService
+	Auth AuthService
+}
+
+// Config is a struct which contains all working components of the NAS File API
 type Config struct {
 	Development bool
 	Host        string
 	Port        int
 	Secure      bool
 
+	Auth       bool
 	PrivateKey string
 
 	StorageRoot string
-	Services    *Services
+	Users       map[string]User
+
+	// API/Database service
+	Services *Services
+
+	// WebDAV default service
+	DefaultHandler *webdav.Handler
 }
 
-//Log prints all the coniguration values the API is running under
+// Log prints all the coniguration values the API is running under
 func (c *Config) Log() {
-	width := terminal.TerminalSize()
+	width := terminal.Size()
+	if width == 0 {
+		width = 60
+	}
 
 	// Start printing configuration values
 	color.HiYellow("Configuration")
@@ -49,10 +66,4 @@ func (c *Config) Log() {
 
 	// Ending separator
 	terminal.LineSeparator("-", color.New(color.FgHiCyan), width)
-}
-
-//Services is a struct to tie all the services into a unified struct
-type Services struct {
-	User UserService
-	Auth AuthService
 }

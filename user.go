@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/net/webdav"
 )
 
 //User is a struct holding important details about every account
@@ -15,12 +16,15 @@ type User struct {
 	Password string    `json:",omitempty"`
 	Admin    bool      `json:"Admin"`
 	Created  time.Time `json:"Created"`
+
+	Handler *webdav.Handler `json:"-"`
 }
 
 //UserService ...
 type UserService interface {
 	Add(u *User) error
 	GetByUsername(username string) (*User, error)
+	GetsAll() (*[]User, error)
 	Delete(uid string) error
 }
 

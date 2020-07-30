@@ -3,11 +3,14 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"log"
 	"net/http"
+	"path"
 	"time"
 
 	"github.com/fatih/color"
 	"github.com/gorilla/mux"
+	"golang.org/x/net/webdav"
 
 	"github.com/nasfiles/nasfilesapi"
 	"github.com/nasfiles/nasfilesapi/utils"
@@ -36,6 +39,21 @@ func UserAdd(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (int
 	}
 
 	color.HiGreen("Created a new user with username %s...", u.Username)
+
+	// Create user WebDAV handler and save it in memory
+	u.Handler = &webdav.Handler{
+		FileSystem: webdav.Dir(path.Join(c.StorageRoot, u.Username)),
+		LockSystem: webdav.NewMemLS(),
+		Logger: func(r *http.Request, err error) {
+			if err != nil {
+				log.Printf("WEBDAV [%s]: %s, ERROR: %s\n", r.Method, r.URL, err)
+			} else {
+				log.Printf("WEBDAV [%s]: %s \n", r.Method, r.URL)
+			}
+		},
+	}
+
+	c.Users[u.Username] = *u
 
 	return jsonPrint(w, u)
 }
