@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/fabiofcferreira/phstoreapi"
 	"github.com/fatih/color"
 
 	"github.com/nasfiles/nasfilesapi"
@@ -64,7 +63,7 @@ func AuthLogin(w http.ResponseWriter, r *http.Request, c *nasfilesapi.Config) (i
 		return http.StatusInternalServerError, err
 	}
 
-	res := &phstoreapi.APITokenResponse{
+	res := &nasfilesapi.APITokenResponse{
 		Token:      ss,
 		Expiration: time.Now().Add(time.Hour * 24 * 14),
 	}
